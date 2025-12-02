@@ -147,15 +147,35 @@ $customers = $customerModel->getAll();
                 <input type="hidden" name="action" value="create">
 
                 <?php
-                // Get available stock for display
+                // Get available stock and prices for all types
                 require_once '../models/Inventory.php';
                 $inventoryModel = new Inventory($conn);
-                $full_bottles = $inventoryModel->getByType('Full Bottle');
-                $available_stock = !empty($full_bottles) ? $full_bottles[0]['quantity'] : 0;
+                $all_inventory = $inventoryModel->getAll();
+                
+                // Build inventory data for JavaScript
+                $inventory_data = [];
+                foreach ($all_inventory as $item) {
+                    $inventory_data[$item['item_type']] = [
+                        'stock' => $item['quantity'],
+                        'price' => $item['price']
+                    ];
+                }
+                $inventory_json = json_encode($inventory_data);
                 ?>
 
+                <script>
+                    const inventoryData = <?php echo $inventory_json; ?>;
+                </script>
+
                 <div style="background:#f0f9ff;padding:12px;border-radius:6px;margin-bottom:15px;border-left:4px solid #0ea5e9;">
-                    <strong>Available Stock:</strong> <?php echo number_format($available_stock); ?> bottles
+                    <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                        <strong>Available Stock:</strong>
+                        <span id="displayStock">-</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;">
+                        <strong>Unit Price:</strong>
+                        <span id="displayPrice">-</span>
+                    </div>
                 </div>
 
                 <div style="margin-bottom:15px;">
@@ -172,7 +192,8 @@ $customers = $customerModel->getAll();
 
                 <div style="margin-bottom:15px;">
                     <label style="display:block; margin-bottom:5px; font-weight:600;">Order Type *</label>
-                    <select name="order_type" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                    <select name="order_type" id="orderType" required onchange="updatePriceFromInventory()" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                        <option value="">Select Type</option>
                         <option value="Full Bottle">Full Bottle (Refill/New)</option>
                         <option value="Small Gallon">Small Gallon</option>
                         <option value="Water Stock">Water Stock (Gallons)</option>
@@ -182,12 +203,19 @@ $customers = $customerModel->getAll();
 
                 <div style="margin-bottom:15px;">
                     <label style="display:block; margin-bottom:5px; font-weight:600;">Quantity *</label>
-                    <input type="number" name="quantity" min="1" value="1" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                    <input type="number" name="quantity" id="orderQuantity" min="1" value="1" required onchange="calculateTotal()" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
                 </div>
 
                 <div style="margin-bottom:15px;">
                     <label style="display:block; margin-bottom:5px; font-weight:600;">Unit Price (₱) *</label>
-                    <input type="number" name="unit_price" min="0" step="0.01" value="50.00" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                    <input type="number" name="unit_price" id="unitPrice" min="0" step="0.01" value="0.00" required onchange="calculateTotal()" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                </div>
+
+                <div style="background:#f9fafb;padding:12px;border-radius:6px;margin-bottom:15px;">
+                    <div style="display:flex;justify-content:space-between;font-size:16px;">
+                        <strong>Total Amount:</strong>
+                        <strong style="color:#0ea5e9;">₱<span id="totalAmount">0.00</span></strong>
+                    </div>
                 </div>
 
                 <div style="margin-bottom:20px;">
@@ -261,6 +289,42 @@ $customers = $customerModel->getAll();
 
         function closeCreateOrderModal() {
             document.getElementById('createOrderModal').style.display = 'none';
+            // Reset form
+            document.getElementById('createOrderForm').reset();
+            document.getElementById('displayStock').textContent = '-';
+            document.getElementById('displayPrice').textContent = '-';
+            document.getElementById('totalAmount').textContent = '0.00';
+        }
+
+        function updatePriceFromInventory() {
+            const orderType = document.getElementById('orderType').value;
+            
+            if (orderType && inventoryData[orderType]) {
+                const item = inventoryData[orderType];
+                
+                // Update display
+                document.getElementById('displayStock').textContent = item.stock + ' available';
+                document.getElementById('displayPrice').textContent = '₱' + parseFloat(item.price).toFixed(2);
+                
+                // Auto-fill unit price
+                document.getElementById('unitPrice').value = parseFloat(item.price).toFixed(2);
+                
+                // Calculate total
+                calculateTotal();
+            } else {
+                document.getElementById('displayStock').textContent = '-';
+                document.getElementById('displayPrice').textContent = '-';
+                document.getElementById('unitPrice').value = '0.00';
+                document.getElementById('totalAmount').textContent = '0.00';
+            }
+        }
+
+        function calculateTotal() {
+            const quantity = parseFloat(document.getElementById('orderQuantity').value) || 0;
+            const unitPrice = parseFloat(document.getElementById('unitPrice').value) || 0;
+            const total = quantity * unitPrice;
+            
+            document.getElementById('totalAmount').textContent = total.toFixed(2);
         }
 
         function openUpdateStatusModal(orderId, orderCode, orderStatus, paymentStatus) {
