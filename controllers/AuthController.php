@@ -1,21 +1,40 @@
 <?php
 require_once '../config/database.php';
+require_once '../models/User.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
     
-    // Simple authentication (in production, use password hashing)
-    // For now, just accept any login and create a session
     if (!empty($username) && !empty($password)) {
-        $_SESSION['user_id'] = 1;
-        $_SESSION['username'] = $username;
-        $_SESSION['role'] = 'Administrator';
+        // Get database connection
+        $conn = getDBConnection();
         
-        header('Location: ../dashboard/index.php');
-        exit();
+        // Create User model instance
+        $userModel = new User($conn);
+        
+        // Attempt authentication
+        $user = $userModel->authenticate($username, $password);
+        
+        if ($user) {
+            // Authentication successful - set session variables
+            $_SESSION['user_id'] = $user['user_id'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['full_name'] = $user['full_name'];
+            $_SESSION['email'] = $user['email'];
+            $_SESSION['role'] = $user['role'];
+            
+            // Redirect to dashboard
+            header('Location: ../dashboard/index.php');
+            exit();
+        } else {
+            // Authentication failed
+            header('Location: ../login.php?error=invalid');
+            exit();
+        }
     } else {
-        header('Location: ../login.php?error=1');
+        // Empty fields
+        header('Location: ../login.php?error=empty');
         exit();
     }
 }

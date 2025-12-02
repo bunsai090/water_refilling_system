@@ -1,3 +1,29 @@
+<?php
+require_once '../config/database.php';
+require_once '../models/Order.php';
+require_once '../models/Inventory.php';
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: ../login.php');
+    exit();
+}
+
+// Get database connection
+$conn = getDBConnection();
+
+// Create model instances
+$orderModel = new Order($conn);
+$inventoryModel = new Inventory($conn);
+
+// Get today's statistics
+$stats = $orderModel->getTodayStats();
+$inventorySummary = $inventoryModel->getSummary();
+
+// Get recent orders
+$recentOrders = $orderModel->getAll();
+$recentOrders = array_slice($recentOrders, 0, 5); // Get only first 5 orders
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,7 +42,7 @@
             <main class="main-content">
                 <div class="page-header mb-6">
                     <h1 class="page-title">Dashboard</h1>
-                    <p class="page-description">Welcome back! Here's your business overview.</p>
+                    <p class="page-description">Welcome back, <?php echo htmlspecialchars($_SESSION['full_name']); ?>! Here's your business overview.</p>
                 </div>
 
                 <!-- Stats Cards -->
@@ -25,7 +51,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                             <div>
                                 <div style="font-size: 12px; color: #666; margin-bottom: 8px;">Total Sales Today</div>
-                                <div style="font-size: 28px; font-weight: 600; color: #333;">₱12,450</div>
+                                <div style="font-size: 28px; font-weight: 600; color: #333;">₱<?php echo number_format($stats['total_sales'] ?? 0, 2); ?></div>
                             </div>
                             <div style="width: 40px; height: 40px; background-color: #e8f5e9; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                                 <svg style="width: 24px; height: 24px; color: #4caf50;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,7 +65,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                             <div>
                                 <div style="font-size: 12px; color: #666; margin-bottom: 8px;">Orders Pending</div>
-                                <div style="font-size: 28px; font-weight: 600; color: #333;">8</div>
+                                <div style="font-size: 28px; font-weight: 600; color: #333;"><?php echo $stats['pending_orders'] ?? 0; ?></div>
                             </div>
                             <div style="width: 40px; height: 40px; background-color: #fff3e0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                                 <svg style="width: 24px; height: 24px; color: #ff9800;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,7 +79,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                             <div>
                                 <div style="font-size: 12px; color: #666; margin-bottom: 8px;">Completed Orders</div>
-                                <div style="font-size: 28px; font-weight: 600; color: #333;">24</div>
+                                <div style="font-size: 28px; font-weight: 600; color: #333;"><?php echo $stats['completed_orders'] ?? 0; ?></div>
                             </div>
                             <div style="width: 40px; height: 40px; background-color: #e3f2fd; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                                 <svg style="width: 24px; height: 24px; color: #2196f3;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,7 +93,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                             <div>
                                 <div style="font-size: 12px; color: #666; margin-bottom: 8px;">Inventory Status</div>
-                                <div style="font-size: 28px; font-weight: 600; color: #333;">156 bottles</div>
+                                <div style="font-size: 28px; font-weight: 600; color: #333;"><?php echo number_format($inventorySummary['full_bottles'] ?? 0); ?> bottles</div>
                             </div>
                             <div style="width: 40px; height: 40px; background-color: #e0f7fa; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                                 <svg style="width: 24px; height: 24px; color: #00bcd4;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,42 +109,37 @@
                     <div class="card" style="padding: 24px;">
                         <h3 style="font-size: 16px; font-weight: 600; color: #333; margin-bottom: 20px;">Recent Orders</h3>
                         <div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                                <div>
-                                    <div style="font-weight: 500; color: #333; margin-bottom: 4px;">Order #1001</div>
-                                    <div style="font-size: 13px; color: #666;">Customer 1</div>
-                                </div>
-                                <span class="badge badge-warning">Pending</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                                <div>
-                                    <div style="font-weight: 500; color: #333; margin-bottom: 4px;">Order #1002</div>
-                                    <div style="font-size: 13px; color: #666;">Customer 2</div>
-                                </div>
-                                <span class="badge badge-warning">Pending</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0;">
-                                <div>
-                                    <div style="font-weight: 500; color: #333; margin-bottom: 4px;">Order #1003</div>
-                                    <div style="font-size: 13px; color: #666;">Customer 3</div>
-                                </div>
-                                <span class="badge badge-warning">Pending</span>
-                            </div>
+                            <?php if (count($recentOrders) > 0): ?>
+                                <?php foreach ($recentOrders as $order): ?>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                                        <div>
+                                            <div style="font-weight: 500; color: #333; margin-bottom: 4px;"><?php echo htmlspecialchars($order['order_code']); ?></div>
+                                            <div style="font-size: 13px; color: #666;"><?php echo htmlspecialchars($order['customer_name']); ?></div>
+                                        </div>
+                                        <span class="badge badge-<?php 
+                                            echo $order['order_status'] == 'Pending' ? 'warning' : 
+                                                 ($order['order_status'] == 'Completed' ? 'success' : 'info'); 
+                                        ?>"><?php echo htmlspecialchars($order['order_status']); ?></span>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <p style="text-align: center; color: #666; padding: 20px;">No orders yet</p>
+                            <?php endif; ?>
                         </div>
                     </div>
 
                     <div class="card" style="padding: 24px;">
                         <h3 style="font-size: 16px; font-weight: 600; color: #333; margin-bottom: 20px;">Quick Actions</h3>
                         <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <button style="width: 100%; padding: 14px; background-color: #e3f2fd; border: none; border-radius: 6px; color: #00bcd4; font-weight: 500; font-size: 14px; cursor: pointer; text-align: left; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#b3e5fc'" onmouseout="this.style.backgroundColor='#e3f2fd'">
+                            <a href="orders.php" style="width: 100%; padding: 14px; background-color: #e3f2fd; border: none; border-radius: 6px; color: #00bcd4; font-weight: 500; font-size: 14px; cursor: pointer; text-align: left; text-decoration: none; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#b3e5fc'" onmouseout="this.style.backgroundColor='#e3f2fd'">
                                 Create New Order
-                            </button>
-                            <button style="width: 100%; padding: 14px; background-color: #e8f5e9; border: none; border-radius: 6px; color: #4caf50; font-weight: 500; font-size: 14px; cursor: pointer; text-align: left; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#c8e6c9'" onmouseout="this.style.backgroundColor='#e8f5e9'">
+                            </a>
+                            <a href="payments.php" style="width: 100%; padding: 14px; background-color: #e8f5e9; border: none; border-radius: 6px; color: #4caf50; font-weight: 500; font-size: 14px; cursor: pointer; text-align: left; text-decoration: none; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#c8e6c9'" onmouseout="this.style.backgroundColor='#e8f5e9'">
                                 Record Payment
-                            </button>
-                            <button style="width: 100%; padding: 14px; background-color: #e3f2fd; border: none; border-radius: 6px; color: #00bcd4; font-weight: 500; font-size: 14px; cursor: pointer; text-align: left; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#b3e5fc'" onmouseout="this.style.backgroundColor='#e3f2fd'">
+                            </a>
+                            <a href="inventory.php" style="width: 100%; padding: 14px; background-color: #e3f2fd; border: none; border-radius: 6px; color: #00bcd4; font-weight: 500; font-size: 14px; cursor: pointer; text-align: left; text-decoration: none; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#b3e5fc'" onmouseout="this.style.backgroundColor='#e3f2fd'">
                                 Update Inventory
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>

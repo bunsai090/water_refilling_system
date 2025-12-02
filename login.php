@@ -17,6 +17,15 @@
                 </div>
                 <h2 class="login-title">Welcome Back</h2>
                 <p class="login-subtitle">Sign in to your account</p>
+                <?php if (isset($_GET['error'])): ?>
+                    <div style="background-color: #fee2e2; color: #991b1b; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 14px;">
+                        <?php if ($_GET['error'] == 'invalid'): ?>
+                            Invalid username or password
+                        <?php elseif ($_GET['error'] == 'empty'): ?>
+                            Please enter both username and password
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <form action="controllers/AuthController.php" method="POST" class="space-y-6">
