@@ -287,10 +287,47 @@ $customers = $customerModel->getAll();
         </div>
     </div>
 
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteOrderModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:white; padding:30px; border-radius:12px; max-width:400px; width:90%; text-align:center;">
+            <div style="margin-bottom:20px;">
+                <div style="width:60px; height:60px; background:#fee2e2; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 15px;">
+                    <svg style="width:30px; height:30px; color:#ef4444;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </div>
+                <h2 style="margin:0 0 10px; font-size:24px; color:#1f2937;">Delete Order?</h2>
+                <p style="color:#6b7280; margin:0;">Are you sure you want to delete order <strong id="deleteOrderCode"></strong>? This action cannot be undone.</p>
+            </div>
+
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button onclick="closeDeleteModal()" style="padding:10px 20px; background:#e5e7eb; border:none; border-radius:6px; cursor:pointer; font-weight:600; color:#374151;">
+                    Cancel
+                </button>
+                <button onclick="confirmDeleteOrder()" style="padding:10px 20px; background:#ef4444; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
+                    Yes, Delete It
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        let orderIdToDelete = null;
+
         function deleteOrder(orderId, orderCode) {
-            if (confirm('Are you sure you want to delete order ' + orderCode + '?\n\nThis action cannot be undone.')) {
-                window.location.href = '../controllers/OrderController.php?action=delete&id=' + orderId;
+            orderIdToDelete = orderId;
+            document.getElementById('deleteOrderCode').textContent = orderCode;
+            document.getElementById('deleteOrderModal').style.display = 'flex';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteOrderModal').style.display = 'none';
+            orderIdToDelete = null;
+        }
+
+        function confirmDeleteOrder() {
+            if (orderIdToDelete) {
+                window.location.href = '../controllers/OrderController.php?action=delete&id=' + orderIdToDelete;
             }
         }
 
@@ -360,6 +397,12 @@ $customers = $customerModel->getAll();
         document.getElementById('updateStatusModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeUpdateStatusModal();
+            }
+        });
+
+        document.getElementById('deleteOrderModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDeleteModal();
             }
         });
     </script>
