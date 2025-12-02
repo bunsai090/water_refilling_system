@@ -41,6 +41,24 @@ $customers = $customerModel->getAll();
                     <p class="page-description">Manage all customer orders</p>
                 </div>
 
+                <?php if (isset($_GET['success'])): ?>
+                    <div style="background:#d1fae5;padding:12px 20px;border-radius:6px;margin-bottom:20px;color:#065f46;">
+                        ✅ Order created successfully!
+                    </div>
+                <?php endif; ?>
+
+                <?php if (isset($_GET['error'])): ?>
+                    <div style="background:#fee2e2;padding:12px 20px;border-radius:6px;margin-bottom:20px;color:#991b1b;">
+                        <?php if ($_GET['error'] == 'insufficient_stock'): ?>
+                            ⚠️ Insufficient stock! Only <?php echo $_GET['available'] ?? 0; ?> bottles available.
+                        <?php elseif ($_GET['error'] == 'no_inventory'): ?>
+                            ⚠️ No inventory items found! Please add inventory first.
+                        <?php else: ?>
+                            ❌ Failed to create order. Please try again.
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title"></h3>
@@ -127,6 +145,18 @@ $customers = $customerModel->getAll();
 
             <form id="createOrderForm" method="POST" action="../controllers/OrderController.php">
                 <input type="hidden" name="action" value="create">
+
+                <?php
+                // Get available stock for display
+                require_once '../models/Inventory.php';
+                $inventoryModel = new Inventory($conn);
+                $full_bottles = $inventoryModel->getByType('Full Bottle');
+                $available_stock = !empty($full_bottles) ? $full_bottles[0]['quantity'] : 0;
+                ?>
+
+                <div style="background:#f0f9ff;padding:12px;border-radius:6px;margin-bottom:15px;border-left:4px solid #0ea5e9;">
+                    <strong>Available Stock:</strong> <?php echo number_format($available_stock); ?> bottles
+                </div>
 
                 <div style="margin-bottom:15px;">
                     <label style="display:block; margin-bottom:5px; font-weight:600;">Customer *</label>
