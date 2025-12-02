@@ -116,6 +116,11 @@ $customers = $customerModel->getAll();
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                         </svg>
                                                     </button>
+                                                    <button class="action-btn" title="Delete" onclick="deleteOrder(<?php echo $order['order_id']; ?>, '<?php echo $order['order_code']; ?>')" style="color:#ef4444;">
+                                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -181,7 +186,7 @@ $customers = $customerModel->getAll();
                 <div style="margin-bottom:15px;">
                     <label style="display:block; margin-bottom:5px; font-weight:600;">Customer *</label>
                     <select name="customer_id" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
-                        <option value="">Select Customer</option>
+                        <option value="">-- Select Customer --</option>
                         <?php foreach ($customers as $customer): ?>
                             <option value="<?php echo $customer['customer_id']; ?>">
                                 <?php echo htmlspecialchars($customer['full_name']); ?> (<?php echo htmlspecialchars($customer['customer_code']); ?>)
@@ -193,7 +198,7 @@ $customers = $customerModel->getAll();
                 <div style="margin-bottom:15px;">
                     <label style="display:block; margin-bottom:5px; font-weight:600;">Order Type *</label>
                     <select name="order_type" id="orderType" required onchange="updatePriceFromInventory()" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
-                        <option value="">Select Type</option>
+                        <option value="">-- Select Order Type --</option>
                         <option value="Full Bottle">Full Bottle (Refill/New)</option>
                         <option value="Small Gallon">Small Gallon</option>
                         <option value="Water Stock">Water Stock (Gallons)</option>
@@ -283,6 +288,12 @@ $customers = $customerModel->getAll();
     </div>
 
     <script>
+        function deleteOrder(orderId, orderCode) {
+            if (confirm('Are you sure you want to delete order ' + orderCode + '?\n\nThis action cannot be undone.')) {
+                window.location.href = '../controllers/OrderController.php?action=delete&id=' + orderId;
+            }
+        }
+
         function openCreateOrderModal() {
             document.getElementById('createOrderModal').style.display = 'flex';
         }
