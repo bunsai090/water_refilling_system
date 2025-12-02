@@ -93,13 +93,7 @@ $customers = $customerModel->getAll();
                                             <td>₱<?php echo number_format($order['total_amount'], 2); ?></td>
                                             <td>
                                                 <div class="table-actions">
-                                                    <button class="action-btn" title="View">
-                                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                        </svg>
-                                                    </button>
-                                                    <button class="action-btn" title="Edit">
+                                                    <button class="action-btn" title="Update Status" onclick="openUpdateStatusModal(<?php echo $order['order_id']; ?>, '<?php echo $order['order_code']; ?>', '<?php echo $order['order_status']; ?>', '<?php echo $order['payment_status']; ?>')">
                                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                         </svg>
@@ -183,6 +177,53 @@ $customers = $customerModel->getAll();
         </div>
     </div>
 
+    <!-- Update Status Modal -->
+    <div id="updateStatusModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:white; padding:30px; border-radius:12px; max-width:400px; width:90%;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="margin:0; font-size:20px;">Update Order Status</h2>
+                <button onclick="closeUpdateStatusModal()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#666;">&times;</button>
+            </div>
+
+            <form method="POST" action="../controllers/OrderController.php">
+                <input type="hidden" name="action" value="update_status">
+                <input type="hidden" name="order_id" id="updateOrderId">
+
+                <div style="margin-bottom:15px; padding:10px; background:#f3f4f6; border-radius:6px;">
+                    <strong>Order:</strong> <span id="updateOrderCode"></span>
+                </div>
+
+                <div style="margin-bottom:15px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:600;">Order Status *</label>
+                    <select name="order_status" id="updateOrderStatus" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-size:14px;">
+                        <option value="Pending">Pending</option>
+                        <option value="Processing">Processing</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom:20px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:600;">Payment Status *</label>
+                    <select name="payment_status" id="updatePaymentStatus" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; font-size:14px;">
+                        <option value="Unpaid">Unpaid</option>
+                        <option value="Partial">Partial</option>
+                        <option value="Paid">Paid</option>
+                    </select>
+                </div>
+
+                <div style="display:flex; gap:10px; justify-content:flex-end;">
+                    <button type="button" onclick="closeUpdateStatusModal()" style="padding:10px 20px; background:#e5e7eb; border:none; border-radius:6px; cursor:pointer;">
+                        Cancel
+                    </button>
+                    <button type="submit" style="padding:10px 20px; background:#10b981; color:white; border:none; border-radius:6px; cursor:pointer;">
+                        Update Status
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         function openCreateOrderModal() {
             document.getElementById('createOrderModal').style.display = 'flex';
@@ -192,10 +233,28 @@ $customers = $customerModel->getAll();
             document.getElementById('createOrderModal').style.display = 'none';
         }
 
+        function openUpdateStatusModal(orderId, orderCode, orderStatus, paymentStatus) {
+            document.getElementById('updateOrderId').value = orderId;
+            document.getElementById('updateOrderCode').textContent = orderCode;
+            document.getElementById('updateOrderStatus').value = orderStatus;
+            document.getElementById('updatePaymentStatus').value = paymentStatus;
+            document.getElementById('updateStatusModal').style.display = 'flex';
+        }
+
+        function closeUpdateStatusModal() {
+            document.getElementById('updateStatusModal').style.display = 'none';
+        }
+
         // Close modal when clicking outside
         document.getElementById('createOrderModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeCreateOrderModal();
+            }
+        });
+
+        document.getElementById('updateStatusModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeUpdateStatusModal();
             }
         });
     </script>
