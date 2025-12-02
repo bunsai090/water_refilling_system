@@ -158,7 +158,7 @@ $inventory_items = $inventoryModel->getAll();
                     <label style="display:block; margin-bottom:5px; font-weight:600;">Item Type *</label>
                     <select name="item_type" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
                         <option value="Full Bottle">Full Bottle</option>
-                        <option value="Empty Bottle">Empty Bottle</option>
+                        <option value="Small Gallon">Small Gallon</option>
                         <option value="Water Stock">Water Stock</option>
                         <option value="Others">Others</option>
                     </select>

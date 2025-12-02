@@ -32,22 +32,23 @@ switch ($action) {
         $inventory_check = true;
         $inventory_item = null;
         
-        if ($order_type == 'Refill' || $order_type == 'New Bottle') {
-            // Check for full bottles
-            $full_bottles = $inventoryModel->getByType('Full Bottle');
+        // For all order types except "Others", check inventory
+        if ($order_type != 'Others') {
+            // Get inventory item of the same type
+            $inventory_items = $inventoryModel->getByType($order_type);
             
-            if (!empty($full_bottles)) {
-                $inventory_item = $full_bottles[0]; // Get first full bottle item
+            if (!empty($inventory_items)) {
+                $inventory_item = $inventory_items[0]; // Get first item of this type
                 $available_stock = $inventory_item['quantity'];
                 
                 if ($available_stock < $quantity) {
                     // Not enough stock
-                    header('Location: ../dashboard/orders.php?error=insufficient_stock&available=' . $available_stock);
+                    header('Location: ../dashboard/orders.php?error=insufficient_stock&available=' . $available_stock . '&type=' . urlencode($order_type));
                     exit();
                 }
             } else {
-                // No inventory item found
-                header('Location: ../dashboard/orders.php?error=no_inventory');
+                // No inventory item found for this type
+                header('Location: ../dashboard/orders.php?error=no_inventory&type=' . urlencode($order_type));
                 exit();
             }
         }
@@ -56,8 +57,8 @@ switch ($action) {
         $order_id = $orderModel->create($customer_id, $order_type, $quantity, $unit_price, $created_by, $notes);
         
         if ($order_id) {
-            // Deduct from inventory if applicable
-            if ($inventory_item && ($order_type == 'Refill' || $order_type == 'New Bottle')) {
+            // Deduct from inventory if applicable (all types except Others)
+            if ($inventory_item && $order_type != 'Others') {
                 $inventoryModel->removeStock(
                     $inventory_item['inventory_id'], 
                     $quantity, 

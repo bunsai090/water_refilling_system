@@ -50,9 +50,9 @@ $customers = $customerModel->getAll();
                 <?php if (isset($_GET['error'])): ?>
                     <div style="background:#fee2e2;padding:12px 20px;border-radius:6px;margin-bottom:20px;color:#991b1b;">
                         <?php if ($_GET['error'] == 'insufficient_stock'): ?>
-                            ⚠️ Insufficient stock! Only <?php echo $_GET['available'] ?? 0; ?> bottles available.
+                            ⚠️ Insufficient stock for <?php echo htmlspecialchars($_GET['type'] ?? 'item'); ?>! Only <?php echo $_GET['available'] ?? 0; ?> available.
                         <?php elseif ($_GET['error'] == 'no_inventory'): ?>
-                            ⚠️ No inventory items found! Please add inventory first.
+                            ⚠️ No "<?php echo htmlspecialchars($_GET['type'] ?? 'item'); ?>" found in inventory! Please add this item first.
                         <?php else: ?>
                             ❌ Failed to create order. Please try again.
                         <?php endif; ?>
@@ -173,10 +173,10 @@ $customers = $customerModel->getAll();
                 <div style="margin-bottom:15px;">
                     <label style="display:block; margin-bottom:5px; font-weight:600;">Order Type *</label>
                     <select name="order_type" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
-                        <option value="Refill">Refill</option>
-                        <option value="New Bottle">New Bottle</option>
-                        <option value="Return">Return</option>
-                        <option value="Other">Other</option>
+                        <option value="Full Bottle">Full Bottle (Refill/New)</option>
+                        <option value="Small Gallon">Small Gallon</option>
+                        <option value="Water Stock">Water Stock (Gallons)</option>
+                        <option value="Others">Others</option>
                     </select>
                 </div>
 
